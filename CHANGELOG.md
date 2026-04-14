@@ -1,0 +1,6 @@
+## 1.0.0
+
+- First stable release: `BeeDynamicLauncher` MethodChannel API for Android and iOS.
+- `LauncherCatalog` with JSON loading, preview path getters (`allPreviewIconAssetPaths`, `variantEntryFor`, `launcherLabelFor`, and related helpers).
+- `BeeDynamicLauncher.previewIconAssetPath` for in-app preview assets.
+- CLI: `dart run bee_dynamic_launcher` — validate assets, patch Android/iOS markers, resize icons; flags `--icons-only`, `--native-only`, `--scan`, `--wizard`, etc.

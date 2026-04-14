@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="launcher_bee_short">Bee Short</string>
+    <string name="launcher_bee_automation">Bee Automation</string>
+    <string name="launcher_gizbee">GizBee</string>
+    <string name="launcher_orion_b">Orion B</string>
+</resources>

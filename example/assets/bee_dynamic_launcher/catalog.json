@@ -1,0 +1,25 @@
+{
+  "primaryVariantId": "orion_b",
+  "variants": [
+    {
+      "id": "bee_short",
+      "displayName": "Bee Short",
+      "launcherLabel": "Bee Short"
+    },
+    {
+      "id": "bee_automation",
+      "displayName": "Bee Automation",
+      "launcherLabel": "Bee Automation"
+    },
+    {
+      "id": "gizbee",
+      "displayName": "GizBee",
+      "launcherLabel": "GizBee"
+    },
+    {
+      "id": "orion_b",
+      "displayName": "Orion B",
+      "launcherLabel": "Orion B"
+    }
+  ]
+}

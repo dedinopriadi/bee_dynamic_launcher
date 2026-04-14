@@ -1,0 +1,28 @@
+PODS:
+  - bee_dynamic_launcher (1.0.0):
+    - Flutter
+  - Flutter (1.0.0)
+  - integration_test (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - bee_dynamic_launcher (from `.symlinks/plugins/bee_dynamic_launcher/ios`)
+  - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+
+EXTERNAL SOURCES:
+  bee_dynamic_launcher:
+    :path: ".symlinks/plugins/bee_dynamic_launcher/ios"
+  Flutter:
+    :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+
+SPEC CHECKSUMS:
+  bee_dynamic_launcher: bc3ec43ba119dae8415eec5b50fbe9153f01e659
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  integration_test: 252f60fa39af5e17c3aa9899d35d908a0721b573
+
+PODFILE CHECKSUM: 0840870cc793c1564088ca76591b407ad0228087
+
+COCOAPODS: 1.16.2
