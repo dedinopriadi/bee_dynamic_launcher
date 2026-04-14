@@ -81,8 +81,7 @@ LauncherCatalogData parseLauncherCatalogJson(String raw) {
         ),
       )
       .toList();
-  final primary =
-      map['primaryVariantId'] as String? ??
+  final primary = map['primaryVariantId'] as String? ??
       (variants.isEmpty ? '' : variants.first.id);
   return LauncherCatalogData(primaryVariantId: primary, variants: variants);
 }
@@ -115,8 +114,7 @@ void validateCatalogAgainstAssets(
     }
   }
   for (final id in found.difference(expected)) {
-    final msg =
-        'PNG ic_$id.png has no matching entry in $kCatalogRelativePath';
+    final msg = 'PNG ic_$id.png has no matching entry in $kCatalogRelativePath';
     if (failOnExtraPng) {
       errLine(msg);
       exitCode = 1;

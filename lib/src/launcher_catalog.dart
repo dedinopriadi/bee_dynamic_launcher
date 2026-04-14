@@ -11,6 +11,7 @@ String launcherIconPreviewAssetPath(String variantId) =>
     'assets/bee_dynamic_launcher/icons/ic_$variantId.png';
 
 class LauncherVariantEntry {
+  /// Immutable launcher variant entry from the catalog.
   const LauncherVariantEntry({
     required this.id,
     required this.displayName,
@@ -27,21 +28,28 @@ class LauncherVariantEntry {
 class LauncherCatalog {
   LauncherCatalog._();
 
+  /// Shared singleton for reading launcher variant data from catalog JSON.
   static final LauncherCatalog instance = LauncherCatalog._();
 
   List<LauncherVariantEntry> _variants = const [];
   String _primaryVariantId = '';
 
+  /// Read-only list of launcher variants currently loaded.
   List<LauncherVariantEntry> get variants => List.unmodifiable(_variants);
 
+  /// Id of the primary/default launcher variant.
   String get primaryVariantId => _primaryVariantId;
 
+  /// All variant ids in catalog order.
   List<String> get allIds => _variants.map((e) => e.id).toList();
 
+  /// Whether at least one variant is loaded.
   bool get hasVariants => _variants.isNotEmpty;
 
+  /// Number of variants loaded from catalog.
   int get variantCount => _variants.length;
 
+  /// Preview icon paths for all loaded variants.
   List<String> get allPreviewIconAssetPaths =>
       _variants.map((e) => e.previewIconAssetPath).toList();
 
@@ -68,6 +76,7 @@ class LauncherCatalog {
     return e?.launcherLabel ?? variantId;
   }
 
+  /// Loads and parses catalog JSON from Flutter asset bundle.
   Future<void> loadFromBundle({
     String assetPath = kDefaultLauncherCatalogAssetPath,
   }) async {
@@ -94,8 +103,7 @@ class LauncherCatalog {
     }
     final map = decoded as Map<String, dynamic>;
     final list = map['variants'] as List<dynamic>? ?? [];
-    _primaryVariantId =
-        map['primaryVariantId'] as String? ??
+    _primaryVariantId = map['primaryVariantId'] as String? ??
         (list.isEmpty
             ? ''
             : (list.first as Map<String, dynamic>)['id'] as String);

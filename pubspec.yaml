@@ -17,6 +17,14 @@ topics:
   - ios
   - utilities
 
+screenshots:
+  - description: Launcher variants screen on iOS and Android.
+    path: doc/showcase/ios-bee_dynamic_launcher.png
+  - description: iOS system confirmation prompt when changing app icon.
+    path: doc/showcase/ios-bee_dynamic_launcher-popup.png
+  - description: Android launcher icon result.
+    path: doc/showcase/android-bee_dynamic_launcher.png
+
 environment:
   sdk: ^3.5.0
   flutter: ">=3.24.0"
