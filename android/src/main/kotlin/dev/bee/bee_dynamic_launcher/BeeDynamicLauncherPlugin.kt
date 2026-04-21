@@ -2,7 +2,9 @@ package dev.bee.bee_dynamic_launcher
 
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -13,6 +15,8 @@ class BeeDynamicLauncherPlugin : FlutterPlugin, MethodChannel.MethodCallHandler 
     private lateinit var context: Context
     private var variantIds: List<String> = emptyList()
     private var primaryVariantId: String = ""
+
+    private val manifestNamespace: String by lazy { resolveManifestNamespace() }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
@@ -85,8 +89,47 @@ class BeeDynamicLauncherPlugin : FlutterPlugin, MethodChannel.MethodCallHandler 
         }
     }
 
-    private fun componentForVariant(id: String): ComponentName =
-        ComponentName(context.packageName, "${context.packageName}.Launcher${aliasSimpleClassName(id)}")
+    private fun hostActivities(pm: PackageManager, pkg: String): Array<out ActivityInfo>? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getPackageInfo(
+                pkg,
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_ACTIVITIES.toLong()),
+            ).activities
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getPackageInfo(pkg, PackageManager.GET_ACTIVITIES).activities
+        }
+
+    private fun resolveManifestNamespace(): String {
+        val pm = context.packageManager
+        val pkg = context.packageName
+        val activities =
+            try {
+                hostActivities(pm, pkg)
+            } catch (_: PackageManager.NameNotFoundException) {
+                null
+            } ?: return pkg
+        for (ai in activities) {
+            val n = ai.name ?: continue
+            if (n.endsWith(".MainActivity")) {
+                return n.substringBeforeLast('.')
+            }
+        }
+        for (ai in activities) {
+            val n = ai.name ?: continue
+            val idx = n.indexOf(".Launcher")
+            if (idx > 0) {
+                return n.substring(0, idx)
+            }
+        }
+        return pkg
+    }
+
+    private fun componentForVariant(id: String): ComponentName {
+        val appId = context.packageName
+        val cls = "$manifestNamespace.Launcher${aliasSimpleClassName(id)}"
+        return ComponentName(appId, cls)
+    }
 
     private fun getCurrentVariant(): String {
         val pm = context.packageManager
