@@ -4,7 +4,13 @@
     {
       "id": "bee_short",
       "displayName": "Bee Short",
-      "launcherLabel": "Bee Short"
+      "launcherLabel": "Bee Short",
+      "style": {
+        "baseColor": "#0EA5E9",
+        "secondaryColor": "#22C55E",
+        "backgroundColor": "#F8FAFC",
+        "surfaceColor": "#FFFFFF"
+      }
     },
     {
       "id": "bee_automation",
@@ -14,7 +20,10 @@
     {
       "id": "gizbee",
       "displayName": "GizBee",
-      "launcherLabel": "GizBee"
+      "launcherLabel": "GizBee",
+      "style": {
+        "baseColor": "#16A34A"
+      }
     },
     {
       "id": "orion_b",

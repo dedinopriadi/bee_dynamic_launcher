@@ -25,6 +25,63 @@ class BeeDynamicLauncher {
   static String previewIconAssetPath(String variantId) =>
       launcherIconPreviewAssetPath(variantId);
 
+  /// Returns optional branding style metadata for [variantId].
+  ///
+  /// If the catalog does not define style for this variant, [defaultStyle] is
+  /// returned.
+  static LauncherVariantStyle? styleForVariant(
+    String variantId, {
+    LauncherVariantStyle? defaultStyle,
+  }) {
+    return LauncherCatalog.instance.variantStyleFor(
+      variantId,
+      defaultStyle: defaultStyle,
+    );
+  }
+
+  /// Returns resolved [Color] values for [variantId].
+  ///
+  /// This converts optional hex strings from catalog style into ready-to-use
+  /// Flutter colors and applies [defaultColors] as fallback.
+  static LauncherVariantResolvedColors? styleColorsForVariant(
+    String variantId, {
+    LauncherVariantResolvedColors? defaultColors,
+  }) {
+    return LauncherCatalog.instance.variantResolvedColorsFor(
+      variantId,
+      defaultColors: defaultColors,
+    );
+  }
+
+  /// Resolves style metadata for the currently active variant.
+  ///
+  /// If native side cannot report the active variant, the catalog primary id is
+  /// used as fallback.
+  static Future<LauncherVariantStyle?> currentStyle({
+    LauncherVariantStyle? defaultStyle,
+  }) async {
+    final current = await getCurrentVariant();
+    final fallbackId = LauncherCatalog.instance.primaryVariantId;
+    final targetVariantId = current ?? fallbackId;
+    if (targetVariantId.isEmpty) {
+      return defaultStyle;
+    }
+    return styleForVariant(targetVariantId, defaultStyle: defaultStyle);
+  }
+
+  /// Resolves color values for the currently active variant.
+  static Future<LauncherVariantResolvedColors?> currentStyleColors({
+    LauncherVariantResolvedColors? defaultColors,
+  }) async {
+    final current = await getCurrentVariant();
+    final fallbackId = LauncherCatalog.instance.primaryVariantId;
+    final targetVariantId = current ?? fallbackId;
+    if (targetVariantId.isEmpty) {
+      return defaultColors;
+    }
+    return styleColorsForVariant(targetVariantId, defaultColors: defaultColors);
+  }
+
   /// Registers launcher [variantIds] and [primaryVariantId] on native side.
   ///
   /// Must be called before invoking [getAvailableVariants], [getCurrentVariant],
@@ -101,5 +158,26 @@ class BeeDynamicLauncher {
   /// controlled by the platform.
   static Future<void> applyVariant(String variantId) async {
     await _channel.invokeMethod<void>('applyVariant', variantId);
+  }
+
+  /// Applies [variantId] then returns resolved style metadata for that variant.
+  ///
+  /// This is a convenience API for white-label flows where launcher variant and
+  /// app styling are switched together from one action.
+  static Future<LauncherVariantStyle?> applyVariantAndGetStyle(
+    String variantId, {
+    LauncherVariantStyle? defaultStyle,
+  }) async {
+    await applyVariant(variantId);
+    return styleForVariant(variantId, defaultStyle: defaultStyle);
+  }
+
+  /// Applies [variantId] then returns resolved color values for that variant.
+  static Future<LauncherVariantResolvedColors?> applyVariantAndGetStyleColors(
+    String variantId, {
+    LauncherVariantResolvedColors? defaultColors,
+  }) async {
+    await applyVariant(variantId);
+    return styleColorsForVariant(variantId, defaultColors: defaultColors);
   }
 }

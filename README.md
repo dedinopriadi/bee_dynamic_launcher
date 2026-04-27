@@ -83,7 +83,7 @@ Persistence of the user’s choice is **not** built in — store `variantId` (e.
 
 ```yaml
 dependencies:
-  bee_dynamic_launcher: ^1.0.0
+  bee_dynamic_launcher: ^1.1.0
 ```
 
 ```yaml
@@ -101,20 +101,35 @@ flutter pub get
 
 | Path                                            | Role                                                                         |
 | ----------------------------------------------- | ---------------------------------------------------------------------------- |
-| `assets/bee_dynamic_launcher/catalog.json`      | `id`, `displayName`, `launcherLabel`; optional `primaryVariantId` (map form) |
+| `assets/bee_dynamic_launcher/catalog.json`      | `id`, `displayName`, `launcherLabel`; optional `primaryVariantId` and per-variant `style` |
 | `assets/bee_dynamic_launcher/icons/ic_<id>.png` | Master PNG: **UI previews** + CLI source for mipmaps / Xcode icons           |
 
 ```json
 {
   "primaryVariantId": "brand_a",
   "variants": [
-    { "id": "brand_a", "displayName": "Brand A", "launcherLabel": "My App" },
-    { "id": "brand_b", "displayName": "Brand B", "launcherLabel": "My App Alt" }
+    {
+      "id": "brand_a",
+      "displayName": "Brand A",
+      "launcherLabel": "My App",
+      "style": {
+        "baseColor": "#1D4ED8",
+        "secondaryColor": "#06B6D4",
+        "backgroundColor": "#F8FAFC",
+        "surfaceColor": "#FFFFFF"
+      }
+    },
+    {
+      "id": "brand_b",
+      "displayName": "Brand B",
+      "launcherLabel": "My App Alt"
+    }
   ]
 }
 ```
 
 `primaryVariantId` must exist in `variants` and matches your default shipped icon.
+`style` is optional for each variant. Omitted keys fall back to your app defaults.
 
 ### 3 · Initialize native side
 
@@ -178,9 +193,62 @@ Widget buildPickerGrid() {
 }
 ```
 
-**Catalog helpers:** `hasVariants`, `variantCount`, `allIds`, `allPreviewIconAssetPaths`, `containsVariant`, `variantEntryFor`, `displayNameFor`, `launcherLabelFor`.
+**Catalog helpers:** `hasVariants`, `variantCount`, `allIds`, `allPreviewIconAssetPaths`, `containsVariant`, `variantEntryFor`, `displayNameFor`, `launcherLabelFor`, `variantStyleFor`.
 
-### 5 · Apply system launcher icon
+### 5 · Optional branding style metadata
+
+```dart
+const defaultStyle = LauncherVariantStyle(
+  baseColor: '#2563EB',
+  secondaryColor: '#14B8A6',
+  backgroundColor: '#F8FAFC',
+  surfaceColor: '#FFFFFF',
+);
+
+final styleForBrandB = BeeDynamicLauncher.styleForVariant(
+  'brand_b',
+  defaultStyle: defaultStyle,
+);
+
+final activeStyle = await BeeDynamicLauncher.currentStyle(
+  defaultStyle: defaultStyle,
+);
+```
+
+**Easy one-call path (apply + resolve style):**
+
+```dart
+final resolvedStyle = await BeeDynamicLauncher.applyVariantAndGetStyle(
+  'brand_b',
+  defaultStyle: defaultStyle,
+);
+```
+
+**Ready-to-use Flutter colors (no manual hex parsing):**
+
+```dart
+const defaultColors = LauncherVariantResolvedColors(
+  baseColor: Color(0xFF2563EB),
+  secondaryColor: Color(0xFF14B8A6),
+  backgroundColor: Color(0xFFF8FAFC),
+  surfaceColor: Color(0xFFFFFFFF),
+);
+
+final resolvedColors = await BeeDynamicLauncher.applyVariantAndGetStyleColors(
+  'brand_b',
+  defaultColors: defaultColors,
+);
+```
+
+`LauncherVariantStyle` is Dart-side metadata only; it does not change native
+MethodChannel behavior.
+
+Supported color string formats in catalog style:
+
+- `#RRGGBB` (opaque color)
+- `#AARRGGBB` (with alpha channel)
+
+### 6 · Apply system launcher icon
 
 ```dart
 await BeeDynamicLauncher.applyVariant('brand_b');
@@ -189,7 +257,7 @@ final String? active = await BeeDynamicLauncher.getCurrentVariant();
 final List<String> ids = await BeeDynamicLauncher.getAvailableVariants();
 ```
 
-### 6 · Full flow (StatefulWidget)
+### 7 · Full flow (StatefulWidget)
 
 ```dart
 import 'package:bee_dynamic_launcher/bee_dynamic_launcher.dart';
@@ -475,19 +543,27 @@ Do **not** register a second launcher `MethodChannel` in `AppDelegate` — this 
 | `getAvailableVariants()`                       | Ids known to native (fallback: catalog)         |
 | `getCurrentVariant()`                          | OS-reported id, if any                          |
 | `applyVariant(id)`                             | Set launcher icon                               |
+| `applyVariantAndGetStyle(id, defaultStyle)`         | Apply launcher icon and return resolved style         |
+| `applyVariantAndGetStyleColors(id, defaultColors)`  | Apply launcher icon and return resolved colors        |
 | `previewIconAssetPath(id)`                     | Asset path for `Image.asset`                    |
+| `styleForVariant(id, defaultStyle)`            | Resolve optional style metadata by id           |
+| `currentStyle(defaultStyle)`                   | Resolve optional style for active variant       |
+| `styleColorsForVariant(id, defaultColors)`     | Resolve parsed colors by id                     |
+| `currentStyleColors(defaultColors)`            | Resolve parsed colors for active variant        |
 
 ### `LauncherCatalog.instance`
 
-| API                                   | Role                        |
-| ------------------------------------- | --------------------------- |
-| `loadFromBundle`                      | Parse JSON from assets      |
-| `variants`                            | `LauncherVariantEntry` list |
-| `allIds` · `primaryVariantId`         | Shortcuts                   |
-| `allPreviewIconAssetPaths`            | All preview paths           |
-| `hasVariants` · `variantCount`        | Guards                      |
-| `containsVariant` · `variantEntryFor` | Lookup                      |
-| `displayNameFor` · `launcherLabelFor` | Labels                      |
+| API                                           | Role                                |
+| --------------------------------------------- | ----------------------------------- |
+| `loadFromBundle`                              | Parse JSON from assets              |
+| `variants`                                    | `LauncherVariantEntry` list         |
+| `allIds` · `primaryVariantId`                 | Shortcuts                           |
+| `allPreviewIconAssetPaths`                    | All preview paths                   |
+| `hasVariants` · `variantCount`                | Guards                              |
+| `containsVariant` · `variantEntryFor`         | Lookup                              |
+| `displayNameFor` · `launcherLabelFor`         | Labels                              |
+| `variantStyleFor`                             | Optional style metadata             |
+| `variantResolvedColorsFor`                    | Optional resolved `Color` values    |
 
 ---
 
