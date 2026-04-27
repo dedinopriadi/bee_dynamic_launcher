@@ -35,11 +35,20 @@ class LauncherSettingsPage extends StatefulWidget {
 }
 
 class _LauncherSettingsPageState extends State<LauncherSettingsPage> {
+  static const LauncherVariantResolvedColors _defaultBrandColors =
+      LauncherVariantResolvedColors(
+        baseColor: Color(0xFF2563EB),
+        secondaryColor: Color(0xFF14B8A6),
+        backgroundColor: Color(0xFFF4F5F7),
+        surfaceColor: Color(0xFFFFFFFF),
+  );
+
   bool _loading = true;
   String? _errorMessage;
   List<LauncherVariantEntry> _entries = const [];
   String? _currentVariantId;
   String? _busyVariantId;
+  LauncherVariantResolvedColors? _activeColors;
 
   @override
   void initState() {
@@ -53,15 +62,21 @@ class _LauncherSettingsPageState extends State<LauncherSettingsPage> {
       _errorMessage = null;
     });
     try {
-      await LauncherCatalog.instance.loadFromBundle();
       await BeeDynamicLauncher.initializeFromCatalog();
       final current = await BeeDynamicLauncher.getCurrentVariant();
+      final resolvedCurrentId =
+          current ?? LauncherCatalog.instance.primaryVariantId;
+      final colors = BeeDynamicLauncher.styleColorsForVariant(
+        resolvedCurrentId,
+        defaultColors: _defaultBrandColors,
+      );
       if (!mounted) {
         return;
       }
       setState(() {
         _entries = LauncherCatalog.instance.variants;
-        _currentVariantId = current ?? LauncherCatalog.instance.primaryVariantId;
+        _currentVariantId = resolvedCurrentId;
+        _activeColors = colors;
         _loading = false;
       });
     } catch (e) {
@@ -81,12 +96,25 @@ class _LauncherSettingsPageState extends State<LauncherSettingsPage> {
     }
     setState(() => _busyVariantId = entry.id);
     try {
-      await BeeDynamicLauncher.applyVariant(entry.id);
+      final requestedColors = await BeeDynamicLauncher.applyVariantAndGetStyleColors(
+        entry.id,
+        defaultColors: _defaultBrandColors,
+      );
       final current = await BeeDynamicLauncher.getCurrentVariant();
+      final resolvedCurrentId = current ?? entry.id;
+      final colors = resolvedCurrentId == entry.id
+          ? requestedColors
+          : BeeDynamicLauncher.styleColorsForVariant(
+              resolvedCurrentId,
+              defaultColors: _defaultBrandColors,
+            );
       if (!mounted) {
         return;
       }
-      setState(() => _currentVariantId = current ?? entry.id);
+      setState(() {
+        _currentVariantId = resolvedCurrentId;
+        _activeColors = colors;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Home icon set to "${entry.displayName}"'),
@@ -119,6 +147,18 @@ class _LauncherSettingsPageState extends State<LauncherSettingsPage> {
 
   String _labelForId(String id) => LauncherCatalog.instance.displayNameFor(id);
 
+  ColorScheme _resolvedColorScheme(ColorScheme base) {
+    final colors = _activeColors;
+    if (colors == null) {
+      return base;
+    }
+    return base.copyWith(
+      primary: colors.baseColor ?? base.primary,
+      secondary: colors.secondaryColor ?? base.secondary,
+      surface: colors.surfaceColor ?? base.surface,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -135,52 +175,78 @@ class _LauncherSettingsPageState extends State<LauncherSettingsPage> {
 
     final currentId = _currentVariantId;
     final currentLabel = currentId == null ? null : _labelForId(currentId);
-    final scheme = Theme.of(context).colorScheme;
+    final baseTheme = Theme.of(context);
+    final baseScheme = baseTheme.colorScheme;
+    final scheme = _resolvedColorScheme(baseScheme);
+    final themedContext = baseTheme.copyWith(colorScheme: scheme);
+    final backgroundColor = _activeColors?.backgroundColor ??
+        (scheme.brightness == Brightness.light
+            ? const Color(0xFFF4F5F7)
+            : Theme.of(context).scaffoldBackgroundColor);
+    final panelColor = _activeColors?.surfaceColor ?? scheme.surface;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Launcher Variants', style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 15.5,
-              letterSpacing: -0.1,
-            ),),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Reload catalog',
-            onPressed: _loading ? null : _load,
-            icon: const Icon(Icons.refresh_rounded),
+    return Theme(
+      data: themedContext,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'Launcher Variants',
+            style: themedContext.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15.5,
+                  letterSpacing: -0.1,
+                ),
           ),
-        ],
-      ),
-      backgroundColor: scheme.brightness == Brightness.light
-          ? const Color(0xFFF4F5F7)
-          : Theme.of(context).scaffoldBackgroundColor,
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-          children: [
-            if (currentId != null && currentLabel != null) ...[
-              const _SectionTitle('Current Launcher'),
-              const SizedBox(height: 8),
-              LauncherPreviewCard(
-                title: currentLabel,
-                variantId: currentId,
-                activeIconAssetPath: launcherIconPreviewAssetPath(currentId),
-              ),
-              const SizedBox(height: 14),
-            ],
-            const _SectionTitle('Icon Variants'),
-            const SizedBox(height: 8),
-            LauncherVariantsSection(
-              entries: _entries,
-              currentVariantId: currentId,
-              busyVariantId: _busyVariantId,
-              onApply: _apply,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              tooltip: 'Reload catalog',
+              onPressed: _loading ? null : _load,
+              icon: const Icon(Icons.refresh_rounded),
             ),
           ],
+        ),
+        backgroundColor: backgroundColor,
+        body: RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            children: [
+              if (currentId != null && currentLabel != null) ...[
+                const _SectionTitle('Current Launcher'),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: panelColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: LauncherPreviewCard(
+                    title: currentLabel,
+                    variantId: currentId,
+                    activeIconAssetPath: launcherIconPreviewAssetPath(currentId),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
+              const _SectionTitle('Icon Variants'),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: panelColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: LauncherVariantsSection(
+                  entries: _entries,
+                  currentVariantId: currentId,
+                  busyVariantId: _busyVariantId,
+                  onApply: _apply,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

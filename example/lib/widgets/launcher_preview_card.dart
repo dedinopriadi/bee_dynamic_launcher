@@ -17,9 +17,7 @@ class LauncherPreviewCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isLight = scheme.brightness == Brightness.light;
-    final borderColor = isLight
-        ? const Color(0xFFD9DEE8)
-        : scheme.outlineVariant.withValues(alpha: 0.5);
+    final borderColor = scheme.primary.withValues(alpha: 0.35);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),

@@ -2,7 +2,7 @@ name: bee_dynamic_launcher
 description: >
   Dynamic launcher icons for Flutter: Android activity-alias switching and iOS alternate
   app icons, with a Dart API and optional CLI to sync native projects from a JSON catalog.
-version: 1.0.1
+version: 1.1.0
 homepage: https://github.com/dedinopriadi/bee_dynamic_launcher
 repository: https://github.com/dedinopriadi/bee_dynamic_launcher
 issue_tracker: https://github.com/dedinopriadi/bee_dynamic_launcher/issues

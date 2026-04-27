@@ -19,9 +19,7 @@ class LauncherVariantsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isLight = scheme.brightness == Brightness.light;
-    final borderColor = isLight
-        ? const Color(0xFFD9DEE8)
-        : scheme.outlineVariant.withValues(alpha: 0.5);
+    final borderColor = scheme.secondary.withValues(alpha: 0.28);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
@@ -79,12 +77,10 @@ class _VariantOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final borderColor = selected
+        ? scheme.primary.withValues(alpha: 0.55)
+        : scheme.outlineVariant.withValues(alpha: 0.35);
     final isLight = scheme.brightness == Brightness.light;
-
-    final borderColor = isLight
-        ? const Color(0xFFD9DEE8)
-        : scheme.outlineVariant.withValues(alpha: 0.5);
-
     final backgroundColor = isLight
         ? const Color(0xFFFCFCFD)
         : scheme.surfaceContainer;
